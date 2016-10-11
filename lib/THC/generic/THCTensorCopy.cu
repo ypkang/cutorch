@@ -67,11 +67,14 @@ THCTensor_(copy)(THCState* state, THCTensor* dst, THCTensor* src) {
   // We are now on srcDev
   if (memcpyEligible) {
     // Perform the copy
+    double t = get_ts();
     THCudaCheck(cudaMemcpyAsync(THCTensor_(data)(state, dst),
                                 THCTensor_(data)(state, src),
                                 totalElements * sizeof(real),
                                 cudaMemcpyDeviceToDevice,
                                 copyStream));
+    double memcpy_d2d = get_ts() - t;
+    std::cout<<std::fixed<<"cudaMemcpyDeviceToDevice,"<<memcpy_d2d<<std::endl;
   } else {
 #ifdef THC_REAL_IS_FLOAT
     // Non-contiguous copy
@@ -124,11 +127,14 @@ THCTensor_(copy)(THCState* state, THCTensor* dst, THCTensor* src) {
         THCudaCheck(cudaSetDevice(srcDev));
       }
 
+      double ts = get_ts();
       THCudaCheck(cudaMemcpyAsync(THCudaTensor_data(state, dstContig),
                                   THCudaTensor_data(state, srcContig),
                                   totalElements * sizeof(float),
                                   cudaMemcpyDeviceToDevice,
                                   copyStream));
+      double memcpy_d2d = get_ts() - ts;
+      std::cout<<std::fixed<<"cudaMemcpyDeviceToDevice,"<<memcpy_d2d<<std::endl;
 
       THCudaTensor_free(state, srcContig);
 

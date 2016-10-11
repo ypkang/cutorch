@@ -1,5 +1,10 @@
+#include <iostream>
+
 #include "THCBlas.h"
 #include "THCGeneral.h"
+
+#include "timing.h"
+
 
 void THCudaBlas_swap(THCState *state, long n, float *x, long incx, float *y, long incy)
 {
@@ -144,7 +149,10 @@ void THCudaBlas_ger(THCState *state, long m, long n, float alpha, float *x, long
       int i_incx = (int)incx;
       int i_incy = (int)incy;
 
+      double ts_time = get_ts();
       THCublasCheck(cublasSger(THCState_getCurrentBlasHandle(state), i_m, i_n, &alpha, x, i_incx, y, i_incy, a, i_lda));
+      double ger = get_ts() - ts_time;
+      std::cout<<std::fixed<<"cublasSger,"<<ger<<std::endl;
       return;
     }
   THError("Cublas_ger only supports m, n, lda, incx, incy"
@@ -208,7 +216,10 @@ void THCudaBlas_gemm(THCState *state, char transa, char transb, long m, long n, 
     int i_ldb = (int)ldb;
     int i_ldc = (int)ldc;
 
+    double ts_time = get_ts();
     THCublasCheck(cublasSgemm(THCState_getCurrentBlasHandle(state), opa, opb, i_m, i_n, i_k, &alpha, a, i_lda, b, i_ldb, &beta, c, i_ldc));
+    double sgemm = (get_ts() - ts_time);
+    std::cout<<std::fixed<<"cublasSgemm,"<<sgemm<<std::endl;;
     return;
   }
   THError("Cublas_gemm only supports m, n, k, lda, ldb, ldc"

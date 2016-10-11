@@ -1,9 +1,13 @@
+#include <iostream>
+
 #include "THCTensorMath.h"
 #include "THCGeneral.h"
 #include "THCBlas.h"
 #include "THCTensorCopy.h"
 #include "THCApply.cuh"
 #include "THCReduce.cuh"
+
+#include "timing.h"
 
 #define IMPLEMENT_CUDA_TENSOR_BASIC_FUNC(NAME, CFUNC)                   \
   struct Tensor##NAME##Op {                                             \
@@ -87,9 +91,12 @@ void THCudaTensor_cadd(THCState *state, THCudaTensor *self_, THCudaTensor* src1,
   if (self_ == src1) {
     if (value == 1.0f) {
       // self += src2
+      double ts = get_ts();
       if (!THCudaTensor_pointwiseApply2(state, self_, src2, TensorAddOp())) {
         THArgCheck(false, 2, CUTORCH_DIM_WARNING);
       }
+      double pointwiseApply2_TensorAddOp = get_ts() - ts;
+      std::cout<<"pointwiseApply2_TensorAddOp,"<<pointwiseApply2_TensorAddOp<<std::endl;
     } else {
       // self += value * src2
       if (!THCudaTensor_pointwiseApply2(state, self_, src2, TensorCAddOp(value))) {
@@ -133,9 +140,12 @@ void THCudaTensor_cmul(THCState *state, THCudaTensor *self_, THCudaTensor *src1,
 
   if (self_ == src1) {
     // self *= src2
+    double ts = get_ts();
     if (!THCudaTensor_pointwiseApply2(state, self_, src2, TensorMulOp())) {
       THArgCheck(false, 2, CUTORCH_DIM_WARNING);
     }
+    double pointwiseApply2_TensorMulOp = get_ts() - ts;
+    std::cout<<"pointwiseApply2_TensorMulOp,"<<pointwiseApply2_TensorMulOp<<std::endl;
   } else {
     THCudaTensor_resizeAs(state, self_, src1);
 

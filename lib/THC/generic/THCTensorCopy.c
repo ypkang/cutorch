@@ -12,10 +12,13 @@ void THCTensor_(copyCPU)(THCState *state, THCTensor *self, struct THTensor *src)
     THCTensor *selfc = THCTensor_(newContiguous)(state, self);
     src = THTensor_(newContiguous)(src);
   
+    double ts = get_ts();
     THCudaCheck(cudaMemcpy(THCTensor_(data)(state,selfc),
                            THTensor_(data)(src),
                            THTensor_(nElement)(src) * sizeof(real), 
                            cudaMemcpyHostToDevice));
+    double memcpy_h2d = get_ts() - ts;
+    printf("cudaMemcpyHostToDevice,%f\n", memcpy_h2d);
 
     THTensor_(free)(src);
     THCTensor_(freeCopyTo)(state, selfc, self);
@@ -58,10 +61,13 @@ void THTensor_(copyCuda)(THCState *state, THTensor *self, struct THCTensor *src)
     THTensor *selfc = THTensor_(newContiguous)(self);
     src = THCTensor_(newContiguous)(state, src);
 
+    double ts = get_ts();
     THCudaCheck(cudaMemcpy(THTensor_(data)(selfc),
                            THCTensor_(data)(state, src),
                            THCTensor_(nElement)(state, src) * sizeof(real),
                            cudaMemcpyDeviceToHost));
+    double memcpy_d2h = get_ts() - ts;
+    printf("cudaMemcpyDeviceToHost,%f\n",memcpy_d2h);
 
     THCTensor_(free)(state, src);
     THTensor_(freeCopyTo)(selfc, self);
@@ -117,12 +123,15 @@ void THCTensor_(copyAsyncCPU)(THCState *state, THCTensor *self, struct THTensor 
     THCudaCheck(cudaSetDevice(tensorDevice));
   }
 
+  double ts = get_ts();
   THCudaCheck(cudaMemcpyAsync(THCTensor_(data)(state, self),
                               THTensor_(data)(src),
                               THTensor_(nElement)(src) * sizeof(real),
                               cudaMemcpyHostToDevice,
                               THCState_getDeviceStream(state, tensorDevice,
                                                        THCState_getCurrentStreamIndex(state))));
+  double memcpy_h2d = get_ts() - ts;
+  printf("cudaMemcpyHostToDevice,%f\n", memcpy_h2d);
 
   if (currentDevice != tensorDevice) {
     THCudaCheck(cudaSetDevice(currentDevice));
@@ -146,12 +155,15 @@ void THTensor_(copyAsyncCuda)(THCState *state, THTensor *self, struct THCTensor 
     THCudaCheck(cudaSetDevice(tensorDevice));
   }
 
+  double ts = get_ts();
   THCudaCheck(cudaMemcpyAsync(THTensor_(data)(self),
                               THCTensor_(data)(state, src),
                               THCTensor_(nElement)(state, src) * sizeof(real),
                               cudaMemcpyDeviceToHost,
                               THCState_getDeviceStream(state, tensorDevice,
                                                        THCState_getCurrentStreamIndex(state))));
+  double memcpy_d2h = get_ts() - ts;
+  printf("cudaMemcpyDeviceToHost,%f\n", memcpy_d2h);
 
   if (currentDevice != tensorDevice) {
     THCudaCheck(cudaSetDevice(currentDevice));

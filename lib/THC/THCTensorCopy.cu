@@ -1,4 +1,6 @@
 #include "THCApply.cuh"
+#include "timing.h"
+#include <iostream>
 
 inline int curGPU() {
   int curDev;
